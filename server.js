@@ -98,12 +98,23 @@ app.post('/api/requirements', (req, res) => {
 
 app.get('/api/requirements/:id/tests', (req, res) => {
   const requirementId = req.params.id;
-  db.all('SELECT * FROM tests WHERE requirement_id = ?', [requirementId], (err, rows) => {
+  db.all('SELECT * FROM tests WHERE requirement_id = ? ORDER BY created_at DESC', [requirementId], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
     res.json(rows);
+  });
+});
+
+app.delete('/api/tests/:id', (req, res) => {
+  const testId = req.params.id;
+  db.run('DELETE FROM tests WHERE id = ?', [testId], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ message: 'Test deleted successfully', id: testId });
   });
 });
 

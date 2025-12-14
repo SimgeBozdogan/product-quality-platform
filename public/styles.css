@@ -227,3 +227,52 @@ body {
   color: white;
 }
 
+.tests-list {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.tests-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.tests-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  background: white;
+  border-radius: 4px;
+}
+
+.btn-delete-test {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-test:hover {
+  background: #c0392b;
+}
+
+.no-tests {
+  color: #999;
+  font-style: italic;
+  margin: 1rem 0;
+}
+

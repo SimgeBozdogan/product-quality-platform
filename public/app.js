@@ -12,6 +12,12 @@ async function loadRequirements() {
   try {
     const response = await fetch(`${API_URL}/requirements`);
     const requirements = await response.json();
+    
+    for (let req of requirements) {
+      const testsResponse = await fetch(`${API_URL}/requirements/${req.id}/tests`);
+      req.tests = await testsResponse.json();
+    }
+    
     displayRequirements(requirements);
   } catch (error) {
     console.error('Error loading requirements:', error);
@@ -20,18 +26,36 @@ async function loadRequirements() {
 
 function displayRequirements(requirements) {
   const container = document.getElementById('requirements-list');
-  container.innerHTML = requirements.map(req => `
+  container.innerHTML = requirements.map(req => {
+    const testCount = req.tests ? req.tests.length : 0;
+    const testsList = req.tests && req.tests.length > 0 
+      ? `<div class="tests-list">
+           <strong>Linked Tests (${testCount}):</strong>
+           <ul>
+             ${req.tests.map(test => `
+               <li>
+                 ${test.title}
+                 <button class="btn-delete-test" onclick="deleteTest(${test.id}, ${req.id})" title="Delete test">×</button>
+               </li>
+             `).join('')}
+           </ul>
+         </div>`
+      : '<p class="no-tests">No tests linked to this requirement</p>';
+    
+    return `
     <div class="requirement-card">
       <h3>${req.title}</h3>
       <p>${req.description || ''}</p>
       ${req.user_story ? `<p><strong>User Story:</strong> ${req.user_story}</p>` : ''}
       ${req.acceptance_criteria ? `<p><strong>Acceptance Criteria:</strong><br>${req.acceptance_criteria.replace(/\n/g, '<br>')}</p>` : ''}
+      ${testsList}
       <div class="actions">
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function addRequirement(event) {
