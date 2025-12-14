@@ -215,6 +215,50 @@ app.get('/api/requirements/:id/risk-assessment', (req, res) => {
   });
 });
 
+app.get('/api/requirements/:id/release-checklist', (req, res) => {
+  const requirementId = req.params.id;
+  
+  db.get('SELECT COUNT(*) as failed FROM tests t JOIN test_results tr ON t.id = tr.test_id WHERE t.requirement_id = ? AND tr.status = "failed"', 
+    [requirementId], (err, failedTests) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      db.get('SELECT COUNT(*) as changes FROM code_changes WHERE requirement_id = ? AND created_at > datetime("now", "-7 days")', 
+        [requirementId], (err, newChanges) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          
+          db.get('SELECT status FROM requirements WHERE id = ?', [requirementId], (err, req) => {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            
+            const hasFailedTests = failedTests.failed > 0;
+            const hasRecentChanges = newChanges.changes > 0;
+            const isNewFeature = req.status === 'new' || req.status === 'draft';
+            
+            const allPassed = !hasFailedTests && !hasRecentChanges;
+            const riskLevel = allPassed ? 'low' : (hasFailedTests ? 'high' : 'medium');
+            
+            res.json({
+              checklist: {
+                failed_tests: !hasFailedTests,
+                new_api_changes: !hasRecentChanges,
+                new_feature: !isNewFeature
+              },
+              risk_level: riskLevel,
+              recommendation: riskLevel === 'low' ? 'This release is acceptable' : 'This release is risky'
+            });
+          });
+        });
+    });
+});
+
 function generateAITests(requirement) {
   const tests = [];
   

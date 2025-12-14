@@ -285,3 +285,34 @@ body {
   margin: 1rem 0;
 }
 
+.checklist-items {
+  margin: 1rem 0;
+}
+
+.checklist-item {
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.check-pass {
+  background: #d4edda;
+  color: #155724;
+}
+
+.check-fail {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+#requirement-select-checklist {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+

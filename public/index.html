@@ -69,6 +69,14 @@
       <h2>Release Risk Assessments</h2>
       <div id="assessments-list"></div>
     </section>
+
+    <section id="release-checklist" class="section">
+      <h2>Release Checklist</h2>
+      <select id="requirement-select-checklist" onchange="loadReleaseChecklist(this.value)">
+        <option value="">Select requirement...</option>
+      </select>
+      <div id="checklist-results"></div>
+    </section>
   </main>
 
   <script src="app.js"></script>
