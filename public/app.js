@@ -184,5 +184,56 @@ async function deleteTest(testId, requirementId) {
   }
 }
 
+async function loadReleaseChecklist(requirementId) {
+  if (!requirementId) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/requirements/${requirementId}/release-checklist`);
+    const checklist = await response.json();
+    displayReleaseChecklist(checklist);
+  } catch (error) {
+    console.error('Error loading release checklist:', error);
+  }
+}
+
+function displayReleaseChecklist(checklist) {
+  const container = document.getElementById('checklist-results');
+  const riskClass = `risk-${checklist.risk_level}`;
+  
+  container.innerHTML = `
+    <div class="requirement-card">
+      <h3>Release Checklist</h3>
+      <div class="checklist-items">
+        <div class="checklist-item ${checklist.checklist.failed_tests ? 'check-pass' : 'check-fail'}">
+          ${checklist.checklist.failed_tests ? '✓' : '✗'} No failed tests
+        </div>
+        <div class="checklist-item ${checklist.checklist.new_api_changes ? 'check-pass' : 'check-fail'}">
+          ${checklist.checklist.new_api_changes ? '✓' : '✗'} No new API changes
+        </div>
+        <div class="checklist-item ${checklist.checklist.new_feature ? 'check-pass' : 'check-fail'}">
+          ${checklist.checklist.new_feature ? '✓' : '✗'} Not a new feature
+        </div>
+      </div>
+      <p><strong>Risk Level:</strong> <span class="risk-badge ${riskClass}">${checklist.risk_level.toUpperCase()}</span></p>
+      <p><strong>Recommendation:</strong> ${checklist.recommendation}</p>
+    </div>
+  `;
+}
+
+async function loadRequirementsForChecklist() {
+  try {
+    const response = await fetch(`${API_URL}/requirements`);
+    const requirements = await response.json();
+    const select = document.getElementById('requirement-select-checklist');
+    if (select) {
+      select.innerHTML = '<option value="">Select requirement...</option>' +
+        requirements.map(req => `<option value="${req.id}">${req.title}</option>`).join('');
+    }
+  } catch (error) {
+    console.error('Error loading requirements:', error);
+  }
+}
+
 loadRequirements();
+loadRequirementsForChecklist();
 
