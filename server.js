@@ -69,6 +69,13 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (requirement_id) REFERENCES requirements(id)
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS api_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    endpoint TEXT NOT NULL,
+    response_structure TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
 
 app.get('/api/requirements', (req, res) => {
@@ -348,6 +355,96 @@ async function analyzeImpact(requirementId, filePath, changeType) {
     affected_tests: [],
     risk_areas: [filePath],
     recommendation: 'Review related tests'
+  };
+}
+
+app.post('/api/api-snapshots', (req, res) => {
+  const { endpoint, response_structure } = req.body;
+  
+  db.get('SELECT * FROM api_snapshots WHERE endpoint = ? ORDER BY created_at DESC LIMIT 1', 
+    [endpoint], (err, previous) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      db.run('INSERT INTO api_snapshots (endpoint, response_structure) VALUES (?, ?)',
+        [endpoint, JSON.stringify(response_structure)], function(insertErr) {
+          if (insertErr) {
+            res.status(500).json({ error: insertErr.message });
+            return;
+          }
+          
+          if (previous) {
+            const previousStructure = JSON.parse(previous.response_structure);
+            const changes = detectAPIChanges(previousStructure, response_structure);
+            
+            if (changes.has_breaking_changes) {
+              res.json({
+                id: this.lastID,
+                warning: 'Breaking changes detected',
+                changes: changes
+              });
+              return;
+            }
+          }
+          
+          res.json({ id: this.lastID, message: 'API snapshot saved' });
+        });
+    });
+});
+
+app.get('/api/api-snapshots/:endpoint/compare', (req, res) => {
+  const endpoint = req.params.endpoint;
+  
+  db.all('SELECT * FROM api_snapshots WHERE endpoint = ? ORDER BY created_at DESC LIMIT 2',
+    [endpoint], (err, snapshots) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      if (snapshots.length < 2) {
+        res.json({ message: 'Not enough snapshots to compare' });
+        return;
+      }
+      
+      const previous = JSON.parse(snapshots[1].response_structure);
+      const current = JSON.parse(snapshots[0].response_structure);
+      const changes = detectAPIChanges(previous, current);
+      
+      res.json({
+        has_changes: changes.has_breaking_changes,
+        changes: changes
+      });
+    });
+});
+
+function detectAPIChanges(previous, current) {
+  const removed = [];
+  const added = [];
+  
+  if (typeof previous === 'object' && typeof current === 'object') {
+    const prevKeys = Object.keys(previous);
+    const currKeys = Object.keys(current);
+    
+    prevKeys.forEach(key => {
+      if (!currKeys.includes(key)) {
+        removed.push(key);
+      }
+    });
+    
+    currKeys.forEach(key => {
+      if (!prevKeys.includes(key)) {
+        added.push(key);
+      }
+    });
+  }
+  
+  return {
+    has_breaking_changes: removed.length > 0,
+    removed_fields: removed,
+    added_fields: added
   };
 }
 

@@ -272,6 +272,55 @@ async function loadRequirementsForChecklist() {
   }
 }
 
+async function saveAPISnapshot() {
+  const endpoint = document.getElementById('api-endpoint').value;
+  const responseText = document.getElementById('api-response').value;
+  
+  if (!endpoint || !responseText) {
+    alert('Please fill in both endpoint and response structure');
+    return;
+  }
+  
+  try {
+    let responseStructure;
+    try {
+      responseStructure = JSON.parse(responseText);
+    } catch (e) {
+      alert('Invalid JSON format');
+      return;
+    }
+    
+    const response = await fetch(`${API_URL}/api-snapshots`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint, response_structure: responseStructure })
+    });
+    
+    const result = await response.json();
+    const container = document.getElementById('api-warnings');
+    
+    if (result.warning) {
+      container.innerHTML = `
+        <div class="requirement-card" style="border-left: 4px solid #e74c3c;">
+          <h3>⚠️ Breaking Changes Detected</h3>
+          <p><strong>Removed fields:</strong> ${result.changes.removed_fields.join(', ') || 'None'}</p>
+          <p><strong>Added fields:</strong> ${result.changes.added_fields.join(', ') || 'None'}</p>
+          <p style="color: #e74c3c; font-weight: bold;">Frontend may break if these fields are used!</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="requirement-card" style="border-left: 4px solid #27ae60;">
+          <p>✓ API snapshot saved. No breaking changes detected.</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error saving API snapshot:', error);
+    alert('Error saving API snapshot');
+  }
+}
+
 loadRequirements();
 loadRequirementsForChecklist();
 

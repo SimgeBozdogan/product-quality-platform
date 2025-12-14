@@ -65,6 +65,22 @@
       <div id="code-changes-list"></div>
     </section>
 
+    <section id="api-changes" class="section">
+      <h2>API Change Detection</h2>
+      <div class="api-form">
+        <label>
+          API Endpoint:
+          <input type="text" id="api-endpoint" placeholder="/api/users">
+        </label>
+        <label>
+          Response Structure (JSON):
+          <textarea id="api-response" rows="5" placeholder='{"id": 1, "name": "John"}'></textarea>
+        </label>
+        <button class="btn-primary" onclick="saveAPISnapshot()">Save Snapshot & Compare</button>
+      </div>
+      <div id="api-warnings"></div>
+    </section>
+
     <section id="assessments" class="section">
       <h2>Release Risk Assessments</h2>
       <div id="assessments-list"></div>

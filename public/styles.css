@@ -337,3 +337,29 @@ body {
   background: #138d75;
 }
 
+.api-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.api-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.api-form input,
+.api-form textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.api-form textarea {
+  resize: vertical;
+}
+
