@@ -140,12 +140,46 @@ app.post('/api/requirements/:id/generate-tests', (req, res) => {
 
 app.get('/api/tests/:id/results', (req, res) => {
   const testId = req.params.id;
-  db.all('SELECT * FROM test_results WHERE test_id = ? ORDER BY created_at DESC', [testId], (err, rows) => {
+  db.all('SELECT * FROM test_results WHERE test_id = ? ORDER BY created_at DESC LIMIT 10', [testId], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
     res.json(rows);
+  });
+});
+
+app.get('/api/tests/:id/flaky-status', (req, res) => {
+  const testId = req.params.id;
+  
+  db.all(`
+    SELECT status 
+    FROM test_results 
+    WHERE test_id = ? 
+    ORDER BY created_at DESC 
+    LIMIT 5
+  `, [testId], (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    
+    if (results.length < 2) {
+      res.json({ is_flaky: false, reason: 'Not enough test runs' });
+      return;
+    }
+    
+    const passCount = results.filter(r => r.status === 'passed').length;
+    const failCount = results.filter(r => r.status === 'failed').length;
+    
+    const isFlaky = (passCount > 0 && failCount > 0) && results.length >= 3;
+    
+    res.json({
+      is_flaky: isFlaky,
+      pass_count: passCount,
+      fail_count: failCount,
+      total_runs: results.length
+    });
   });
 });
 

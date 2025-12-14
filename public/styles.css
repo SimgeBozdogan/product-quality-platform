@@ -316,3 +316,24 @@ body {
   max-width: 400px;
 }
 
+.flaky-badge {
+  display: inline-block;
+  background: #e74c3c;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.btn-history {
+  background: #16a085;
+  color: white;
+  margin-top: 0.5rem;
+}
+
+.btn-history:hover {
+  background: #138d75;
+}
+

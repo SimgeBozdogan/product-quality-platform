@@ -109,16 +109,54 @@ async function loadTests(requirementId) {
   }
 }
 
-function displayTests(tests) {
+async function displayTests(tests) {
   const container = document.getElementById('tests-list');
-  container.innerHTML = tests.map(test => `
+  
+  for (let test of tests) {
+    try {
+      const flakyResponse = await fetch(`${API_URL}/tests/${test.id}/flaky-status`);
+      test.flaky = await flakyResponse.json();
+    } catch (error) {
+      test.flaky = { is_flaky: false };
+    }
+  }
+  
+  container.innerHTML = tests.map(test => {
+    const flakyBadge = test.flaky && test.flaky.is_flaky 
+      ? '<span class="flaky-badge">FLAKY TEST</span>' 
+      : '';
+    
+    const historyInfo = test.flaky && test.flaky.total_runs 
+      ? `<p><strong>Last 5 runs:</strong> ${test.flaky.pass_count} passed, ${test.flaky.fail_count} failed</p>`
+      : '';
+    
+    return `
     <div class="requirement-card">
-      <h3>${test.title}</h3>
+      <h3>${test.title} ${flakyBadge}</h3>
       <p>${test.description || ''}</p>
       <p><strong>Type:</strong> ${test.type} | <strong>Status:</strong> ${test.status}</p>
+      ${historyInfo}
       ${test.ai_generated ? '<span style="color: #3498db;">AI Generated</span>' : ''}
+      <button class="btn-small btn-history" onclick="showTestHistory(${test.id})">View History</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
+}
+
+async function showTestHistory(testId) {
+  try {
+    const response = await fetch(`${API_URL}/tests/${testId}/results`);
+    const results = await response.json();
+    
+    const history = results.map((result, index) => 
+      `${index + 1}. ${result.status.toUpperCase()} - ${new Date(result.created_at).toLocaleString()}`
+    ).join('\n');
+    
+    alert(`Test execution history:\n\n${history || 'No test results yet'}`);
+  } catch (error) {
+    console.error('Error loading test history:', error);
+    alert('Error loading test history');
+  }
 }
 
 async function assessRisk(requirementId) {
