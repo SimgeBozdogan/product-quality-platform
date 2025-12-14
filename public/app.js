@@ -52,6 +52,7 @@ function displayRequirements(requirements) {
       <div class="actions">
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
+        <button class="btn-small btn-affected" onclick="showAffectedTests(${req.id})">Affected Tests</button>
       </div>
     </div>
   `;
@@ -142,6 +143,23 @@ function displayAssessment(assessment) {
       <p><strong>Recommendation:</strong> ${assessment.recommendation}</p>
     </div>
   `;
+}
+
+async function showAffectedTests(requirementId) {
+  try {
+    const response = await fetch(`${API_URL}/requirements/${requirementId}/affected-tests`);
+    const data = await response.json();
+    
+    if (data.affected_tests && data.affected_tests.length > 0) {
+      const testsList = data.affected_tests.map(test => `- ${test.title}`).join('\n');
+      alert(`Tests that should be re-run after recent code changes:\n\n${testsList}`);
+    } else {
+      alert('No tests affected by recent code changes');
+    }
+  } catch (error) {
+    console.error('Error loading affected tests:', error);
+    alert('Error loading affected tests');
+  }
 }
 
 async function deleteTest(testId, requirementId) {

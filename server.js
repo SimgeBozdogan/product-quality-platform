@@ -167,6 +167,25 @@ app.post('/api/code-changes', (req, res) => {
   );
 });
 
+app.get('/api/requirements/:id/affected-tests', (req, res) => {
+  const requirementId = req.params.id;
+  
+  db.all(`
+    SELECT DISTINCT t.* 
+    FROM tests t
+    JOIN code_changes cc ON t.requirement_id = cc.requirement_id
+    WHERE cc.requirement_id = ?
+    AND cc.created_at > datetime('now', '-7 days')
+    ORDER BY t.created_at DESC
+  `, [requirementId], (err, tests) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ affected_tests: tests });
+  });
+});
+
 app.get('/api/requirements/:id/risk-assessment', (req, res) => {
   const requirementId = req.params.id;
   
