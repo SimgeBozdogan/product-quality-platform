@@ -141,6 +141,10 @@ body {
   margin-top: 1.5rem;
 }
 
+.form-actions button {
+  flex: 1;
+}
+
 .requirements-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
