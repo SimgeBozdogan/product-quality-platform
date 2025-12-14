@@ -144,5 +144,27 @@ function displayAssessment(assessment) {
   `;
 }
 
+async function deleteTest(testId, requirementId) {
+  if (!confirm('Are you sure you want to delete this test? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/tests/${testId}`, {
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      alert('Test deleted successfully');
+      loadRequirements();
+    } else {
+      alert('Error deleting test');
+    }
+  } catch (error) {
+    console.error('Error deleting test:', error);
+    alert('Error deleting test');
+  }
+}
+
 loadRequirements();
 
