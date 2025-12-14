@@ -1,0 +1,23 @@
+{
+  "name": "product-quality-platform",
+  "version": "1.0.0",
+  "description": "Full-stack platform for managing product requirements, testing processes, and release risk assessment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["qa", "testing", "product-management", "risk-assessment"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+
