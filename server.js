@@ -133,15 +133,31 @@ app.post('/api/requirements/:id/generate-tests', (req, res) => {
       return;
     }
     
-    const aiTests = generateAITests(req);
-    
-    const stmt = db.prepare('INSERT INTO tests (requirement_id, title, description, type, ai_generated) VALUES (?, ?, ?, ?, 1)');
-    aiTests.forEach(test => {
-      stmt.run([requirementId, test.title, test.description, test.type]);
+    db.run('DELETE FROM tests WHERE requirement_id = ? AND ai_generated = 1', [requirementId], (deleteErr) => {
+      if (deleteErr) {
+        res.status(500).json({ error: deleteErr.message });
+        return;
+      }
+      
+      const aiTests = generateAITests(req);
+      
+      if (aiTests.length === 0) {
+        res.json({ message: 'No tests generated', count: 0 });
+        return;
+      }
+      
+      const stmt = db.prepare('INSERT INTO tests (requirement_id, title, description, type, ai_generated) VALUES (?, ?, ?, ?, 1)');
+      aiTests.forEach(test => {
+        stmt.run([requirementId, test.title, test.description, test.type]);
+      });
+      stmt.finalize((finalizeErr) => {
+        if (finalizeErr) {
+          res.status(500).json({ error: finalizeErr.message });
+          return;
+        }
+        res.json({ message: 'Tests generated', count: aiTests.length });
+      });
     });
-    stmt.finalize();
-    
-    res.json({ message: 'Tests generated', count: aiTests.length });
   });
 });
 
