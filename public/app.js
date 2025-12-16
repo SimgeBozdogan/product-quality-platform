@@ -6,6 +6,9 @@ function showRequirementForm() {
 
 function hideRequirementForm() {
   document.getElementById('requirement-form').style.display = 'none';
+  editingRequirementId = null;
+  document.getElementById('requirement-form-title').textContent = 'New Requirement';
+  document.querySelector('#requirement-form form').reset();
 }
 
 async function loadRequirements() {
@@ -37,6 +40,7 @@ function displayRequirements(requirements) {
       ${req.acceptance_criteria ? `<p><strong>Acceptance Criteria:</strong><br>${req.acceptance_criteria.replace(/\n/g, '<br>')}</p>` : ''}
       <p class="test-count">Tests: ${testCount}</p>
       <div class="actions">
+        <button class="btn-small btn-edit" onclick="editRequirement(${req.id})">Edit</button>
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
         <button class="btn-small btn-view-tests" onclick="showRequirementTests(${req.id})">View Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
@@ -45,6 +49,26 @@ function displayRequirements(requirements) {
     </div>
   `;
   }).join('');
+}
+
+let editingRequirementId = null;
+
+function editRequirement(requirementId) {
+  editingRequirementId = requirementId;
+  fetch(`${API_URL}/requirements/${requirementId}`)
+    .then(res => res.json())
+    .then(requirement => {
+      document.getElementById('requirement-form-title').textContent = 'Edit Requirement';
+      document.querySelector('#requirement-form input[name="title"]').value = requirement.title || '';
+      document.querySelector('#requirement-form textarea[name="description"]').value = requirement.description || '';
+      document.querySelector('#requirement-form textarea[name="user_story"]').value = requirement.user_story || '';
+      document.querySelector('#requirement-form textarea[name="acceptance_criteria"]').value = requirement.acceptance_criteria || '';
+      showRequirementForm();
+    })
+    .catch(error => {
+      console.error('Error loading requirement:', error);
+      alert('Error loading requirement');
+    });
 }
 
 async function addRequirement(event) {
@@ -58,19 +82,30 @@ async function addRequirement(event) {
   };
 
   try {
-    const response = await fetch(`${API_URL}/requirements`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    let response;
+    if (editingRequirementId) {
+      response = await fetch(`${API_URL}/requirements/${editingRequirementId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    } else {
+      response = await fetch(`${API_URL}/requirements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    }
     
     if (response.ok) {
       hideRequirementForm();
       event.target.reset();
+      editingRequirementId = null;
+      document.getElementById('requirement-form-title').textContent = 'New Requirement';
       loadRequirements();
     }
   } catch (error) {
-    console.error('Error adding requirement:', error);
+    console.error('Error saving requirement:', error);
   }
 }
 

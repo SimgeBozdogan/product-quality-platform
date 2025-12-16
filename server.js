@@ -103,6 +103,26 @@ app.post('/api/requirements', (req, res) => {
   );
 });
 
+app.put('/api/requirements/:id', (req, res) => {
+  const requirementId = req.params.id;
+  const { title, description, user_story, acceptance_criteria } = req.body;
+  db.run(
+    'UPDATE requirements SET title = ?, description = ?, user_story = ?, acceptance_criteria = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [title, description, user_story, acceptance_criteria, requirementId],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'Requirement not found' });
+        return;
+      }
+      res.json({ id: requirementId, title, description, user_story, acceptance_criteria });
+    }
+  );
+});
+
 app.get('/api/requirements/:id/tests', (req, res) => {
   const requirementId = req.params.id;
   db.all('SELECT * FROM tests WHERE requirement_id = ? ORDER BY created_at DESC', [requirementId], (err, rows) => {
@@ -128,40 +148,47 @@ app.delete('/api/tests/:id', (req, res) => {
 app.post('/api/requirements/:id/generate-tests', (req, res) => {
   const requirementId = req.params.id;
   
-  db.run('DELETE FROM tests WHERE requirement_id = ? AND ai_generated = 1', [requirementId], (deleteErr) => {
-    if (deleteErr) {
-      res.status(500).json({ error: deleteErr.message });
+  db.run('DELETE FROM test_results WHERE test_id IN (SELECT id FROM tests WHERE requirement_id = ? AND ai_generated = 1)', [requirementId], (deleteResultsErr) => {
+    if (deleteResultsErr) {
+      res.status(500).json({ error: deleteResultsErr.message });
       return;
     }
     
-    db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, requirement) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
+    db.run('DELETE FROM tests WHERE requirement_id = ? AND ai_generated = 1', [requirementId], (deleteErr) => {
+      if (deleteErr) {
+        res.status(500).json({ error: deleteErr.message });
         return;
       }
       
-      if (!requirement) {
-        res.status(404).json({ error: 'Requirement not found' });
-        return;
-      }
-      
-      const aiTests = generateAITests(requirement);
-      
-      if (aiTests.length === 0) {
-        res.json({ message: 'No tests generated', count: 0 });
-        return;
-      }
-      
-      const stmt = db.prepare('INSERT INTO tests (requirement_id, title, description, type, ai_generated) VALUES (?, ?, ?, ?, 1)');
-      aiTests.forEach(test => {
-        stmt.run([requirementId, test.title, test.description, test.type]);
-      });
-      stmt.finalize((finalizeErr) => {
-        if (finalizeErr) {
-          res.status(500).json({ error: finalizeErr.message });
+      db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, requirement) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
           return;
         }
-        res.json({ message: 'Tests generated', count: aiTests.length });
+        
+        if (!requirement) {
+          res.status(404).json({ error: 'Requirement not found' });
+          return;
+        }
+        
+        const aiTests = generateAITests(requirement);
+        
+        if (aiTests.length === 0) {
+          res.json({ message: 'No tests generated', count: 0 });
+          return;
+        }
+        
+        const stmt = db.prepare('INSERT INTO tests (requirement_id, title, description, type, ai_generated) VALUES (?, ?, ?, ?, 1)');
+        aiTests.forEach(test => {
+          stmt.run([requirementId, test.title, test.description, test.type]);
+        });
+        stmt.finalize((finalizeErr) => {
+          if (finalizeErr) {
+            res.status(500).json({ error: finalizeErr.message });
+            return;
+          }
+          res.json({ message: 'Tests generated', count: aiTests.length });
+        });
       });
     });
   });
