@@ -328,30 +328,54 @@ app.get('/api/requirements/:id/release-checklist', (req, res) => {
 function generateAITests(requirement) {
   const tests = [];
   
-  if (requirement.user_story) {
+  if (!requirement) {
+    return tests;
+  }
+  
+  const title = requirement.title || 'Feature';
+  const userStory = requirement.user_story || '';
+  const description = requirement.description || '';
+  const acceptanceCriteria = requirement.acceptance_criteria || '';
+  
+  if (userStory && userStory.trim()) {
     tests.push({
-      title: `Test: ${requirement.title} - Happy Path`,
-      description: `Verify that ${requirement.user_story} works as expected`,
+      title: `Test: ${title} - Happy Path`,
+      description: `Verify that ${userStory.trim()} works as expected`,
       type: 'functional'
     });
     
     tests.push({
-      title: `Test: ${requirement.title} - Error Handling`,
-      description: `Verify error handling for ${requirement.user_story}`,
+      title: `Test: ${title} - Error Handling`,
+      description: `Verify error handling for ${userStory.trim()}`,
       type: 'negative'
     });
   }
   
-  if (requirement.acceptance_criteria) {
-    const criteria = requirement.acceptance_criteria.split('\n');
+  if (acceptanceCriteria && acceptanceCriteria.trim()) {
+    const criteria = acceptanceCriteria.split('\n');
     criteria.forEach((criterion, index) => {
-      if (criterion.trim()) {
+      const trimmedCriterion = criterion.trim();
+      if (trimmedCriterion && trimmedCriterion.length > 0) {
         tests.push({
-          title: `Test: ${requirement.title} - Acceptance Criterion ${index + 1}`,
-          description: criterion.trim(),
+          title: `Test: ${title} - Acceptance Criterion ${index + 1}`,
+          description: trimmedCriterion,
           type: 'acceptance'
         });
       }
+    });
+  } else if (description && description.trim()) {
+    tests.push({
+      title: `Test: ${title} - Basic Functionality`,
+      description: `Verify basic functionality: ${description.trim()}`,
+      type: 'functional'
+    });
+  }
+  
+  if (tests.length === 0) {
+    tests.push({
+      title: `Test: ${title} - Basic Test`,
+      description: `Basic test for ${title}`,
+      type: 'functional'
     });
   }
   
