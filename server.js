@@ -88,6 +88,32 @@ app.get('/api/requirements', (req, res) => {
   });
 });
 
+app.get('/api/requirements/:id/tests', (req, res) => {
+  const requirementId = req.params.id;
+  db.all('SELECT * FROM tests WHERE requirement_id = ? ORDER BY created_at DESC', [requirementId], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows);
+  });
+});
+
+app.get('/api/requirements/:id', (req, res) => {
+  const requirementId = req.params.id;
+  db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!row) {
+      res.status(404).json({ error: 'Requirement not found' });
+      return;
+    }
+    res.json(row);
+  });
+});
+
 app.post('/api/requirements', (req, res) => {
   const { title, description, user_story, acceptance_criteria } = req.body;
   db.run(
@@ -164,17 +190,6 @@ app.delete('/api/requirements/:id', (req, res) => {
         });
       });
     });
-  });
-});
-
-app.get('/api/requirements/:id/tests', (req, res) => {
-  const requirementId = req.params.id;
-  db.all('SELECT * FROM tests WHERE requirement_id = ? ORDER BY created_at DESC', [requirementId], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(rows);
   });
 });
 
