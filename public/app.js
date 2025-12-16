@@ -41,6 +41,7 @@ function displayRequirements(requirements) {
       <p class="test-count">Tests: ${testCount}</p>
       <div class="actions">
         <button class="btn-small btn-edit" onclick="editRequirement(${req.id})">Edit</button>
+        <button class="btn-small btn-delete" onclick="deleteRequirement(${req.id})">Delete</button>
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
         <button class="btn-small btn-view-tests" onclick="showRequirementTests(${req.id})">View Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
@@ -69,6 +70,28 @@ function editRequirement(requirementId) {
       console.error('Error loading requirement:', error);
       alert('Error loading requirement');
     });
+}
+
+async function deleteRequirement(requirementId) {
+  if (!confirm('Are you sure you want to delete this requirement? This will also delete all associated tests, test results, and code changes. This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/requirements/${requirementId}`, {
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      loadRequirements();
+    } else {
+      const errorData = await response.json();
+      alert('Error deleting requirement: ' + (errorData.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error deleting requirement:', error);
+    alert('Error deleting requirement: ' + error.message);
+  }
 }
 
 async function addRequirement(event) {

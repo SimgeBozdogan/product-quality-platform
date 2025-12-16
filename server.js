@@ -123,6 +123,50 @@ app.put('/api/requirements/:id', (req, res) => {
   );
 });
 
+app.delete('/api/requirements/:id', (req, res) => {
+  const requirementId = req.params.id;
+  
+  db.run('DELETE FROM test_results WHERE test_id IN (SELECT id FROM tests WHERE requirement_id = ?)', [requirementId], (err1) => {
+    if (err1) {
+      res.status(500).json({ error: err1.message });
+      return;
+    }
+    
+    db.run('DELETE FROM tests WHERE requirement_id = ?', [requirementId], (err2) => {
+      if (err2) {
+        res.status(500).json({ error: err2.message });
+        return;
+      }
+      
+      db.run('DELETE FROM code_changes WHERE requirement_id = ?', [requirementId], (err3) => {
+        if (err3) {
+          res.status(500).json({ error: err3.message });
+          return;
+        }
+        
+        db.run('DELETE FROM release_assessments WHERE requirement_id = ?', [requirementId], (err4) => {
+          if (err4) {
+            res.status(500).json({ error: err4.message });
+            return;
+          }
+          
+          db.run('DELETE FROM requirements WHERE id = ?', [requirementId], function(err5) {
+            if (err5) {
+              res.status(500).json({ error: err5.message });
+              return;
+            }
+            if (this.changes === 0) {
+              res.status(404).json({ error: 'Requirement not found' });
+              return;
+            }
+            res.json({ message: 'Requirement deleted successfully' });
+          });
+        });
+      });
+    });
+  });
+});
+
 app.get('/api/requirements/:id/tests', (req, res) => {
   const requirementId = req.params.id;
   db.all('SELECT * FROM tests WHERE requirement_id = ? ORDER BY created_at DESC', [requirementId], (err, rows) => {

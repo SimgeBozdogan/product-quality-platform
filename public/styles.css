@@ -191,6 +191,24 @@ body {
   cursor: pointer;
 }
 
+.btn-edit {
+  background: #3498db;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #2980b9;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
+}
+
 .btn-generate {
   background: #27ae60;
   color: white;
