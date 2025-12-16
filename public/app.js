@@ -38,9 +38,9 @@ function displayRequirements(requirements) {
       <p class="test-count">Tests: ${testCount}</p>
       <div class="actions">
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
+        <button class="btn-small btn-view-tests" onclick="showRequirementTests(${req.id})">View Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
         <button class="btn-small btn-affected" onclick="showAffectedTests(${req.id})">Affected Tests</button>
-        <button class="btn-small btn-view-tests" onclick="showRequirementTests(${req.id})">View Tests</button>
       </div>
     </div>
   `;
