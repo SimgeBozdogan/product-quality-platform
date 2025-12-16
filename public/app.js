@@ -80,10 +80,15 @@ async function generateTests(requirementId) {
       method: 'POST'
     });
     const result = await response.json();
-    alert(`Generated ${result.count} test scenarios`);
-    loadTests(requirementId);
+    
+    const testsResponse = await fetch(`${API_URL}/requirements/${requirementId}/tests`);
+    const allTests = await testsResponse.json();
+    
+    alert(`Generated ${result.count} test scenarios. Total tests: ${allTests.length}`);
+    loadRequirements();
   } catch (error) {
     console.error('Error generating tests:', error);
+    alert('Error generating tests');
   }
 }
 
@@ -109,6 +114,8 @@ async function displayTests(tests) {
     }
   }
   
+  const requirementId = tests.length > 0 ? tests[0].requirement_id : null;
+  
   container.innerHTML = tests.map(test => {
     const flakyBadge = test.flaky && test.flaky.is_flaky 
       ? '<span class="flaky-badge">FLAKY TEST</span>' 
@@ -125,7 +132,10 @@ async function displayTests(tests) {
       <p><strong>Type:</strong> ${test.type} | <strong>Status:</strong> ${test.status}</p>
       ${historyInfo}
       ${test.ai_generated ? '<span style="color: #3498db;">AI Generated</span>' : ''}
-      <button class="btn-small btn-history" onclick="showTestHistory(${test.id})">View History</button>
+      <div class="test-actions">
+        <button class="btn-small btn-history" onclick="showTestHistory(${test.id})">View History</button>
+        <button class="btn-small btn-delete-test-action" onclick="deleteTest(${test.id}, ${test.requirement_id || requirementId})">Delete</button>
+      </div>
     </div>
   `;
   }).join('');
@@ -181,11 +191,7 @@ async function showRequirementTests(requirementId) {
       return;
     }
     
-    const testsList = tests.map(test => 
-      `${test.title} [${test.status}] <button onclick="deleteTest(${test.id}, ${requirementId})">Delete</button>`
-    ).join('\n');
-    
-    displayTests(tests);
+    await displayTests(tests);
     
     const container = document.getElementById('tests-list');
     if (container) {
@@ -227,12 +233,16 @@ async function deleteTest(testId, requirementId) {
     if (response.ok) {
       alert('Test deleted successfully');
       loadRequirements();
+      if (requirementId) {
+        await showRequirementTests(requirementId);
+      }
     } else {
-      alert('Error deleting test');
+      const errorData = await response.json();
+      alert('Error deleting test: ' + (errorData.error || 'Unknown error'));
     }
   } catch (error) {
     console.error('Error deleting test:', error);
-    alert('Error deleting test');
+    alert('Error deleting test: ' + error.message);
   }
 }
 
