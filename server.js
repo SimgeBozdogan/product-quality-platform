@@ -127,19 +127,25 @@ app.delete('/api/tests/:id', (req, res) => {
 
 app.post('/api/requirements/:id/generate-tests', (req, res) => {
   const requirementId = req.params.id;
-  db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, req) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
+  
+  db.run('DELETE FROM tests WHERE requirement_id = ? AND ai_generated = 1', [requirementId], (deleteErr) => {
+    if (deleteErr) {
+      res.status(500).json({ error: deleteErr.message });
       return;
     }
     
-    db.run('DELETE FROM tests WHERE requirement_id = ? AND ai_generated = 1', [requirementId], (deleteErr) => {
-      if (deleteErr) {
-        res.status(500).json({ error: deleteErr.message });
+    db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, requirement) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
         return;
       }
       
-      const aiTests = generateAITests(req);
+      if (!requirement) {
+        res.status(404).json({ error: 'Requirement not found' });
+        return;
+      }
+      
+      const aiTests = generateAITests(requirement);
       
       if (aiTests.length === 0) {
         res.json({ message: 'No tests generated', count: 0 });
