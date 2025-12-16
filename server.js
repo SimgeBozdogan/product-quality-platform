@@ -88,21 +88,6 @@ app.get('/api/requirements', (req, res) => {
   });
 });
 
-app.get('/api/requirements/:id', (req, res) => {
-  const requirementId = req.params.id;
-  db.get('SELECT * FROM requirements WHERE id = ?', [requirementId], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (!row) {
-      res.status(404).json({ error: 'Requirement not found' });
-      return;
-    }
-    res.json(row);
-  });
-});
-
 app.post('/api/requirements', (req, res) => {
   const { title, description, user_story, acceptance_criteria } = req.body;
   db.run(
