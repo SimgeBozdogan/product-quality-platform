@@ -212,6 +212,21 @@ body {
   background: #8e44ad;
 }
 
+.btn-view-tests {
+  background: #16a085;
+  color: white;
+}
+
+.btn-view-tests:hover {
+  background: #138d75;
+}
+
+.test-count {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
 .risk-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;

@@ -28,19 +28,6 @@ function displayRequirements(requirements) {
   const container = document.getElementById('requirements-list');
   container.innerHTML = requirements.map(req => {
     const testCount = req.tests ? req.tests.length : 0;
-    const testsList = req.tests && req.tests.length > 0 
-      ? `<div class="tests-list">
-           <strong>Linked Tests (${testCount}):</strong>
-           <ul>
-             ${req.tests.map(test => `
-               <li>
-                 ${test.title}
-                 <button class="btn-delete-test" onclick="deleteTest(${test.id}, ${req.id})" title="Delete test">×</button>
-               </li>
-             `).join('')}
-           </ul>
-         </div>`
-      : '<p class="no-tests">No tests linked to this requirement</p>';
     
     return `
     <div class="requirement-card">
@@ -48,11 +35,12 @@ function displayRequirements(requirements) {
       <p>${req.description || ''}</p>
       ${req.user_story ? `<p><strong>User Story:</strong> ${req.user_story}</p>` : ''}
       ${req.acceptance_criteria ? `<p><strong>Acceptance Criteria:</strong><br>${req.acceptance_criteria.replace(/\n/g, '<br>')}</p>` : ''}
-      ${testsList}
+      <p class="test-count">Tests: ${testCount}</p>
       <div class="actions">
         <button class="btn-small btn-generate" onclick="generateTests(${req.id})">Generate Tests</button>
         <button class="btn-small btn-assess" onclick="assessRisk(${req.id})">Assess Risk</button>
         <button class="btn-small btn-affected" onclick="showAffectedTests(${req.id})">Affected Tests</button>
+        <button class="btn-small btn-view-tests" onclick="showRequirementTests(${req.id})">View Tests</button>
       </div>
     </div>
   `;
@@ -181,6 +169,32 @@ function displayAssessment(assessment) {
       <p><strong>Recommendation:</strong> ${assessment.recommendation}</p>
     </div>
   `;
+}
+
+async function showRequirementTests(requirementId) {
+  try {
+    const response = await fetch(`${API_URL}/requirements/${requirementId}/tests`);
+    const tests = await response.json();
+    
+    if (tests.length === 0) {
+      alert('No tests linked to this requirement');
+      return;
+    }
+    
+    const testsList = tests.map(test => 
+      `${test.title} [${test.status}] <button onclick="deleteTest(${test.id}, ${requirementId})">Delete</button>`
+    ).join('\n');
+    
+    displayTests(tests);
+    
+    const container = document.getElementById('tests-list');
+    if (container) {
+      container.scrollIntoView({ behavior: 'smooth' });
+    }
+  } catch (error) {
+    console.error('Error loading requirement tests:', error);
+    alert('Error loading tests');
+  }
 }
 
 async function showAffectedTests(requirementId) {
