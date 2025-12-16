@@ -54,22 +54,26 @@ function displayRequirements(requirements) {
 
 let editingRequirementId = null;
 
-function editRequirement(requirementId) {
+async function editRequirement(requirementId) {
   editingRequirementId = requirementId;
-  fetch(`${API_URL}/requirements/${requirementId}`)
-    .then(res => res.json())
-    .then(requirement => {
-      document.getElementById('requirement-form-title').textContent = 'Edit Requirement';
-      document.querySelector('#requirement-form input[name="title"]').value = requirement.title || '';
-      document.querySelector('#requirement-form textarea[name="description"]').value = requirement.description || '';
-      document.querySelector('#requirement-form textarea[name="user_story"]').value = requirement.user_story || '';
-      document.querySelector('#requirement-form textarea[name="acceptance_criteria"]').value = requirement.acceptance_criteria || '';
-      showRequirementForm();
-    })
-    .catch(error => {
-      console.error('Error loading requirement:', error);
-      alert('Error loading requirement');
-    });
+  try {
+    const response = await fetch(`${API_URL}/requirements/${requirementId}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      alert('Error loading requirement: ' + (errorData.error || 'Unknown error'));
+      return;
+    }
+    const requirement = await response.json();
+    document.getElementById('requirement-form-title').textContent = 'Edit Requirement';
+    document.querySelector('#requirement-form input[name="title"]').value = requirement.title || '';
+    document.querySelector('#requirement-form textarea[name="description"]').value = requirement.description || '';
+    document.querySelector('#requirement-form textarea[name="user_story"]').value = requirement.user_story || '';
+    document.querySelector('#requirement-form textarea[name="acceptance_criteria"]').value = requirement.acceptance_criteria || '';
+    showRequirementForm();
+  } catch (error) {
+    console.error('Error loading requirement:', error);
+    alert('Error loading requirement: ' + error.message);
+  }
 }
 
 async function deleteRequirement(requirementId) {
