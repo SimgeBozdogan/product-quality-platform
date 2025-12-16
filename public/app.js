@@ -58,12 +58,28 @@ async function editRequirement(requirementId) {
   editingRequirementId = requirementId;
   try {
     const response = await fetch(`${API_URL}/requirements/${requirementId}`);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      alert('Error loading requirement: ' + (errorData.error || 'Unknown error'));
+      let errorMessage = 'Unknown error';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      alert('Error loading requirement: ' + errorMessage);
       return;
     }
-    const requirement = await response.json();
+    
+    let requirement;
+    try {
+      requirement = await response.json();
+    } catch (e) {
+      alert('Error parsing requirement data');
+      console.error('Parse error:', e);
+      return;
+    }
+    
     document.getElementById('requirement-form-title').textContent = 'Edit Requirement';
     document.querySelector('#requirement-form input[name="title"]').value = requirement.title || '';
     document.querySelector('#requirement-form textarea[name="description"]').value = requirement.description || '';
