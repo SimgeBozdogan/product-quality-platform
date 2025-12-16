@@ -236,20 +236,23 @@ app.get('/api/requirements/:id/risk-assessment', (req, res) => {
       return;
     }
     
-    db.get('SELECT COUNT(*) as failed FROM tests t JOIN test_results tr ON t.id = tr.test_id WHERE t.requirement_id = ? AND tr.status = "failed"', 
-      [requirementId], (err, failedCount) => {
+    db.get('SELECT COUNT(*) as failed FROM tests t JOIN test_results tr ON t.id = tr.test_id WHERE t.requirement_id = ? AND tr.status = ?', 
+      [requirementId, 'failed'], (err, failedCount) => {
         if (err) {
           res.status(500).json({ error: err.message });
           return;
         }
         
-        const riskLevel = calculateRiskLevel(testCount.total, failedCount.failed);
+        const total = testCount ? testCount.total : 0;
+        const failed = failedCount ? failedCount.failed : 0;
+        
+        const riskLevel = calculateRiskLevel(total, failed);
         const recommendation = getRecommendation(riskLevel);
         
         res.json({
           risk_level: riskLevel,
-          test_coverage: testCount.total,
-          failed_tests: failedCount.failed,
+          test_coverage: total,
+          failed_tests: failed,
           recommendation: recommendation
         });
       });
